@@ -1,6 +1,6 @@
 ---
 name: conduct
-description: "Stamp a fresh repo with reusable Claude conduct: a CLAUDE.md preamble (session orientation from the Obsidian vault, rules of conduct, available-skills pointer, docs/ layout), a vault/ memory scaffold, and the matching .gitignore lines. Use when starting Claude on a new project, when the user says 'set up conduct here', 'stamp this repo', or '/conduct init'."
+description: "Stamp a repo with reusable Claude conduct: a CLAUDE.md preamble (session orientation from the Obsidian vault, rules of conduct, available-skills pointer, docs/ layout), a vault/ memory scaffold, and the matching .gitignore lines. Works on fresh AND existing repos — on an existing CLAUDE.md it reports which canonical sections are present vs missing and offers to merge only the missing ones (idempotent, never clobbers). Use when starting Claude on a project, when the user says 'set up conduct here', 'stamp this repo', or '/conduct init'."
 metadata:
   author: setup-kit
   version: "1.0"
@@ -17,12 +17,24 @@ content (pipelines, prompts) is NOT part of this kit — only the reusable shell
 ## Commands
 
 ### `init` (default)
-Stamp the current repo (git root). Idempotent — never clobber an existing file;
-report what already exists and what was created.
+Stamp the current repo (git root). Idempotent — never clobber existing content;
+add only what's missing and report what already existed vs what was created.
 
-1. **`CLAUDE.md`** — if absent, copy `templates/CLAUDE.md` to the git root and
-   replace `<PROJECT>` with the repo's directory name. If present, leave it and
-   tell the user (offer to show the template diff).
+1. **`CLAUDE.md`** — section-aware, idempotent:
+   - **If absent**, copy `templates/CLAUDE.md` to the git root and replace
+     `<PROJECT>` with the repo's directory name.
+   - **If present**, do NOT overwrite. Scan it for each canonical section the
+     template provides — `## Session conduct`, `## Docs layout`,
+     `## Skills available here`, `## Rules of conduct` — matching by intent, not
+     just exact heading text (a repo may already cover "rules" under another
+     name). **Report** which are present vs missing. If any are missing, show the
+     user the exact content that would be added and **ask to merge**. On confirm,
+     intelligently merge ONLY the missing sections: preserve every existing line
+     and the user's own rules, place each new section sensibly, fold rather than
+     duplicate where a section partially exists (e.g. add the brevity rule to an
+     existing rules list instead of starting a second one), and never add a
+     section that's already covered. Re-running converges — once all sections
+     exist, there is nothing to add.
 2. **`vault/` scaffold** — if `vault/Home.md` is absent, bootstrap a vault via the
    `/vault init` command (the canonical vault skill owns the structure). Then make
    it cross-project discoverable:
@@ -32,7 +44,10 @@ report what already exists and what was created.
    present (append any missing; don't duplicate).
 
 ### `check`
-Report what a fresh `init` would create — change nothing.
+Report what a fresh `init` would create or merge — change nothing. For an
+existing `CLAUDE.md`, list which canonical sections are present vs missing (the
+same scan `init` performs), plus whether the `vault/` scaffold and `.gitignore`
+lines exist.
 
 ## The docs/ layout (baked into the template)
 
