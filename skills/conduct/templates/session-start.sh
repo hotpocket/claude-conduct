@@ -3,32 +3,16 @@
 # the agent's context at session start, making vault orientation deterministic
 # instead of prose-dependent. Cheap by design — pointers only, never full bodies
 # (the agent reads the recap/todo files on demand).
+#
+# Fully file-based: it delegates to scripts/vault-digest, which is pure grep/awk
+# over the vault's .md files. NO Obsidian app/CLI/GUI is touched, so it's safe
+# headless and parallel sessions in different repos never contend over Obsidian.
 set -u
-repo="$(cd "$(dirname "$0")/.." && pwd)"
-
-# Obsidian's CLI silently times out unless the desktop app is running.
-if pgrep -x obsidian >/dev/null 2>&1; then
-  echo "Obsidian: running"
-elif command -v obsidian >/dev/null 2>&1; then
-  (nohup obsidian >/dev/null 2>&1 &)
-  echo "Obsidian: launched just now — wait a few seconds before the first CLI call"
-else
-  echo "Obsidian: not installed — CLI vault queries unavailable on this machine"
+digest="$(cd "$(dirname "$0")" && pwd)/vault-digest"
+if [[ ! -x "$digest" ]]; then
+  echo "vault-digest not found beside this hook — run /conduct init"
+  exit 0
 fi
 
-# Latest recap pointer — row order in the Session Log is authoritative
-# (filename mtime drifts on touched files).
-log="$repo/vault/sessions/Session Log.md"
-if [[ -f "$log" ]]; then
-  recap="$(grep -oE '\[\[20[0-9]{2}-[^]]+\]\]' "$log" | tail -1)"
-  echo "Latest session recap: ${recap:-none yet}"
-else
-  echo "No vault Session Log at vault/sessions/Session Log.md — run /vault init"
-fi
-
-# Open-todo count for this project (count only; read the file for detail).
-todos="$repo/vault/todos/$(basename "$repo").md"
-if [[ -f "$todos" ]]; then
-  open="$(grep -cE '^- \[ \]' "$todos" 2>/dev/null || true)"
-  echo "Open todos (${todos##*/}): ${open:-0}"
-fi
+echo "Latest session recap: $("$digest" recap)"
+echo "Open todos: $("$digest" todos 2>/dev/null | grep -c '\[ \]' || true)"

@@ -1,6 +1,6 @@
 ---
 name: conduct
-description: "Stamp a repo with reusable Claude conduct: a CLAUDE.md preamble (rules of conduct, available-skills pointer, docs/ layout), a SessionStart hook that injects vault orientation deterministically, a vault/ memory scaffold, and the matching .gitignore lines. Works on fresh AND existing repos — on an existing CLAUDE.md it reports which canonical sections are present vs missing and offers to merge only the missing ones (idempotent, never clobbers). Use when starting Claude on a project, when the user says 'set up conduct here', 'stamp this repo', or '/conduct init'."
+description: "Stamp a repo with reusable Claude conduct: a CLAUDE.md preamble (rules of conduct, available-skills pointer, docs/ layout), a file-based vault-digest tool + SessionStart hook for deterministic Obsidian-free vault orientation, a vault/ memory scaffold, and the matching .gitignore lines. Works on fresh AND existing repos — on an existing CLAUDE.md it reports which canonical sections are present vs missing and offers to merge only the missing ones (idempotent, never clobbers). Use when starting Claude on a project, when the user says 'set up conduct here', 'stamp this repo', or '/conduct init'."
 metadata:
   author: setup-kit
   version: "1.0"
@@ -35,14 +35,17 @@ add only what's missing and report what already existed vs what was created.
      existing rules list instead of starting a second one), and never add a
      section that's already covered. Re-running converges — once all sections
      exist, there is nothing to add.
-2. **`SessionStart` hook** — make session-start orientation deterministic
-   (the hook's stdout is injected into context at session start, so it no longer
-   depends on the model choosing to read the prose):
-   - Copy `templates/session-start.sh` to `scripts/session-start.sh` at the git
-     root (create `scripts/` if needed) and `chmod +x` it. The script prints
-     *pointers only* — the latest recap from `vault/sessions/Session Log.md` and
-     the open-todo count — never full bodies (matches the vault skill's cheap
-     Phase-1 orientation).
+2. **Vault tooling + `SessionStart` hook** — make orientation deterministic and
+   vault access cheap, all **file-based (no Obsidian app/CLI/GUI)**:
+   - Copy `templates/vault-digest` to `scripts/vault-digest` (create `scripts/`
+     if needed) and `chmod +x` it. It does pure grep/awk reads of the vault's
+     frontmatter — Level-0 summaries, `type`/`concern` filters, the recap
+     pointer, todos, backlinks — and is the agent's default low-token access
+     path. (See "Vault access" in the CLAUDE.md template.)
+   - Copy `templates/session-start.sh` to `scripts/session-start.sh` and
+     `chmod +x` it. It delegates to `vault-digest` and prints *pointers only*
+     (latest recap + open-todo count); its stdout is injected into context at
+     session start, so orientation no longer depends on the model reading prose.
    - Ensure the repo's project `.claude/settings.json` has a `SessionStart` hook
      running `"$CLAUDE_PROJECT_DIR"/scripts/session-start.sh`. If the file is
      absent, create it with just that hook; if present, merge the hook in without
@@ -59,9 +62,9 @@ add only what's missing and report what already existed vs what was created.
 ### `check`
 Report what a fresh `init` would create or merge — change nothing. For an
 existing `CLAUDE.md`, list which canonical sections are present vs missing (the
-same scan `init` performs), plus whether the `SessionStart` hook
-(`scripts/session-start.sh` + `.claude/settings.json`), the `vault/` scaffold,
-and the `.gitignore` lines exist.
+same scan `init` performs), plus whether `scripts/vault-digest`, the
+`SessionStart` hook (`scripts/session-start.sh` + `.claude/settings.json`), the
+`vault/` scaffold, and the `.gitignore` lines exist.
 
 ## The docs/ layout (baked into the template)
 
