@@ -4,14 +4,14 @@
 
 ## Session conduct
 
-**At session start**, orient from the project's Obsidian memory before acting:
-1. Read `vault/sessions/Session Log.md` → most recent recap.
-2. Read `vault/todos/<PROJECT>.md` → open work.
-Then proceed with the user's request. Use the `/vault` skill for all memory
-operations (lookup, note, recap, todo). When you discover something durable
-(architecture, a gotcha, a decision and its why), write it back to the vault.
+Session-start orientation is injected automatically by the `SessionStart` hook
+(`scripts/session-start.sh`, wired in `.claude/settings.json`): it surfaces the
+latest recap pointer and the open-todo count. Go deeper on demand — read the
+recap body in `vault/sessions/` or open `vault/todos/<PROJECT>.md`.
 
-**At session end**, offer `/vault recap` to capture what changed.
+Use the `/vault` skill for all memory operations (lookup, note, recap, todo).
+When you discover something durable (architecture, a gotcha, a decision and its
+why), write it back to the vault. **At session end**, offer `/vault recap`.
 
 ## Docs layout
 

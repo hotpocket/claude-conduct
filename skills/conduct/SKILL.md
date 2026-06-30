@@ -1,6 +1,6 @@
 ---
 name: conduct
-description: "Stamp a repo with reusable Claude conduct: a CLAUDE.md preamble (session orientation from the Obsidian vault, rules of conduct, available-skills pointer, docs/ layout), a vault/ memory scaffold, and the matching .gitignore lines. Works on fresh AND existing repos — on an existing CLAUDE.md it reports which canonical sections are present vs missing and offers to merge only the missing ones (idempotent, never clobbers). Use when starting Claude on a project, when the user says 'set up conduct here', 'stamp this repo', or '/conduct init'."
+description: "Stamp a repo with reusable Claude conduct: a CLAUDE.md preamble (rules of conduct, available-skills pointer, docs/ layout), a SessionStart hook that injects vault orientation deterministically, a vault/ memory scaffold, and the matching .gitignore lines. Works on fresh AND existing repos — on an existing CLAUDE.md it reports which canonical sections are present vs missing and offers to merge only the missing ones (idempotent, never clobbers). Use when starting Claude on a project, when the user says 'set up conduct here', 'stamp this repo', or '/conduct init'."
 metadata:
   author: setup-kit
   version: "1.0"
@@ -35,19 +35,33 @@ add only what's missing and report what already existed vs what was created.
      existing rules list instead of starting a second one), and never add a
      section that's already covered. Re-running converges — once all sections
      exist, there is nothing to add.
-2. **`vault/` scaffold** — if `vault/Home.md` is absent, bootstrap a vault via the
+2. **`SessionStart` hook** — make session-start orientation deterministic
+   (the hook's stdout is injected into context at session start, so it no longer
+   depends on the model choosing to read the prose):
+   - Copy `templates/session-start.sh` to `scripts/session-start.sh` at the git
+     root (create `scripts/` if needed) and `chmod +x` it. The script prints
+     *pointers only* — the latest recap from `vault/sessions/Session Log.md` and
+     the open-todo count — never full bodies (matches the vault skill's cheap
+     Phase-1 orientation).
+   - Ensure the repo's project `.claude/settings.json` has a `SessionStart` hook
+     running `"$CLAUDE_PROJECT_DIR"/scripts/session-start.sh`. If the file is
+     absent, create it with just that hook; if present, merge the hook in without
+     touching other settings; if it's already there, leave it. Idempotent.
+   - Note: project-level hooks trigger Claude Code's one-time hook-trust prompt.
+3. **`vault/` scaffold** — if `vault/Home.md` is absent, bootstrap a vault via the
    `/vault init` command (the canonical vault skill owns the structure). Then make
    it cross-project discoverable:
    `ln -s "$(git rev-parse --show-toplevel)/vault" ~/Documents/AgentMemory/<PROJECT>`
    (skip if the symlink already exists; `mkdir -p ~/Documents/AgentMemory` first).
-3. **`.gitignore`** — ensure the lines from the "Gitignore" section below are
+4. **`.gitignore`** — ensure the lines from the "Gitignore" section below are
    present (append any missing; don't duplicate).
 
 ### `check`
 Report what a fresh `init` would create or merge — change nothing. For an
 existing `CLAUDE.md`, list which canonical sections are present vs missing (the
-same scan `init` performs), plus whether the `vault/` scaffold and `.gitignore`
-lines exist.
+same scan `init` performs), plus whether the `SessionStart` hook
+(`scripts/session-start.sh` + `.claude/settings.json`), the `vault/` scaffold,
+and the `.gitignore` lines exist.
 
 ## The docs/ layout (baked into the template)
 
