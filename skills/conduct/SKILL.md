@@ -35,22 +35,21 @@ add only what's missing and report what already existed vs what was created.
      existing rules list instead of starting a second one), and never add a
      section that's already covered. Re-running converges — once all sections
      exist, there is nothing to add.
-2. **Vault tooling + `SessionStart` hook** — make orientation deterministic and
-   vault access cheap, all **file-based (no Obsidian app/CLI/GUI)**:
+2. **Vault tooling** — make orientation deterministic and vault access cheap,
+   all **file-based (no Obsidian app/CLI/GUI)**:
    - Copy `templates/vault-digest` to `scripts/vault-digest` (create `scripts/`
-     if needed) and `chmod +x` it. It does pure grep/awk reads of the vault's
-     frontmatter — Level-0 summaries, `type`/`concern` filters, the recap
-     pointer, todos, backlinks — and is the agent's default low-token access
-     path. (See "Vault access" in the CLAUDE.md template.)
+     if needed) and `chmod +x` it. Pure grep/awk reads of the vault's frontmatter
+     — Level-0 summaries, `type`/`concern` filters, recap, todos, backlinks — the
+     agent's default low-token access path.
    - Copy `templates/session-start.sh` to `scripts/session-start.sh` and
      `chmod +x` it. It delegates to `vault-digest` and prints *pointers only*
-     (latest recap + open-todo count); its stdout is injected into context at
-     session start, so orientation no longer depends on the model reading prose.
-   - Ensure the repo's project `.claude/settings.json` has a `SessionStart` hook
-     running `"$CLAUDE_PROJECT_DIR"/scripts/session-start.sh`. If the file is
-     absent, create it with just that hook; if present, merge the hook in without
-     touching other settings; if it's already there, leave it. Idempotent.
-   - Note: project-level hooks trigger Claude Code's one-time hook-trust prompt.
+     (recap + open-todo count).
+   - **Do NOT stamp a project `.claude/settings.json` hook.** Orientation is
+     driven by the ONE global `SessionStart` router `~/bin/claude-orient` (shipped
+     by `.configs`, registered once in `~/.claude/settings.json`); it `exec`s this
+     repo's `scripts/session-start.sh`. A global router avoids per-repo hook-trust
+     prompts, works in repos whose `.claude/settings.json` is the global file, and
+     is the same mechanism that serves un-owned repos (see `adopt`).
 3. **`vault/` scaffold** — if `vault/Home.md` is absent, bootstrap a vault via the
    `/vault init` command (the canonical vault skill owns the structure). Then make
    it cross-project discoverable:
@@ -58,6 +57,19 @@ add only what's missing and report what already existed vs what was created.
    (skip if the symlink already exists; `mkdir -p ~/Documents/AgentMemory` first).
 4. **`.gitignore`** — ensure the lines from the "Gitignore" section below are
    present (append any missing; don't duplicate).
+
+### `adopt` — for repos you do NOT own
+Give Claude memory + conduct in a repo you can't commit to, **touching nothing in
+its tree**:
+1. Create an **external** vault at `~/Documents/AgentMemory/<repo>` via
+   `/vault init` (so `Home.md`/`sessions/`/`todos/` live outside the repo).
+2. Rely on the global `SessionStart` router `~/bin/claude-orient` — it detects the
+   external vault by the project's basename and orients from it — plus
+   `~/bin/vault-digest` for reads
+   (`OBSIDIAN_VAULT_PATH=~/Documents/AgentMemory/<repo> vault-digest …`).
+3. Global conduct (`~/.claude/CLAUDE.md`) already applies — no project `CLAUDE.md`.
+4. Optional: a git-ignored `.claude/settings.local.json` for local-only per-repo
+   tweaks (never committed).
 
 ### `check`
 Report what a fresh `init` would create or merge — change nothing. For an

@@ -4,10 +4,10 @@
 
 ## Session conduct
 
-Session-start orientation is injected automatically by the `SessionStart` hook
-(`scripts/session-start.sh`, wired in `.claude/settings.json`): it surfaces the
-latest recap pointer and the open-todo count. Go deeper on demand — read the
-recap body in `vault/sessions/` or open `vault/todos/<PROJECT>.md`.
+Session-start orientation is injected by the global `SessionStart` router
+(`~/bin/claude-orient`), which runs this repo's `scripts/session-start.sh`:
+latest recap pointer + open-todo count. Go deeper on demand — read the recap body
+in `vault/sessions/` or open `vault/todos/<PROJECT>.md`.
 
 **Vault access is file-first.** Use `scripts/vault-digest` for cheap reads —
 grep/awk over note frontmatter, no Obsidian app/CLI/GUI, safe across parallel
