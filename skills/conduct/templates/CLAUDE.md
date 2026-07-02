@@ -40,4 +40,7 @@ why), write it back to the vault. **At session end**, offer `/vault recap`.
 - Be brief: no preamble, no recap of what the user knows, no surveying paths not taken.
 - Idempotent, reversible-by-default; confirm before hard-to-undo or outward-facing actions.
 - Report outcomes faithfully — if a step failed or was skipped, say so.
+- Never `git push` (and never force-push) — the human pushes manually. A global
+  PreToolUse guard (`~/bin/deny-git-push.sh`) enforces this mechanically; this
+  line is the why, not the enforcement.
 <!-- Add project-specific rules below. -->

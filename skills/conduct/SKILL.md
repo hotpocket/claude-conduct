@@ -57,6 +57,16 @@ add only what's missing and report what already existed vs what was created.
    (skip if the symlink already exists; `mkdir -p ~/Documents/AgentMemory` first).
 4. **`.gitignore`** — ensure the lines from the "Gitignore" section below are
    present (append any missing; don't duplicate).
+5. **No-push guard (global, once)** — install `templates/deny-git-push.sh` to
+   `~/bin/deny-git-push.sh` (`chmod +x`) and register it as a `PreToolUse`
+   matcher `Bash` hook in the **global** `~/.claude/settings.json` (skip if
+   already registered — idempotent). It mechanically denies any `git push` (force
+   or plain; compound and `git -C` forms included) so the agent cannot push. This
+   is a **global** hook, not a per-repo project hook — consistent with the global
+   `SessionStart` router (step 2) and the "no project `.claude/settings.json`
+   hook" stance: one registration protects every repo, owned, adopted, or not.
+   The matching rule lives in the CLAUDE.md template's Rules of conduct as the
+   human-readable why.
 
 ### `adopt` — for repos you do NOT own
 Give Claude memory + conduct in a repo you can't commit to, **touching nothing in
@@ -76,7 +86,8 @@ Report what a fresh `init` would create or merge — change nothing. For an
 existing `CLAUDE.md`, list which canonical sections are present vs missing (the
 same scan `init` performs), plus whether `scripts/vault-digest`, the
 `SessionStart` hook (`scripts/session-start.sh` + `.claude/settings.json`), the
-`vault/` scaffold, and the `.gitignore` lines exist.
+`vault/` scaffold, the `.gitignore` lines, and the global no-push guard
+(`~/bin/deny-git-push.sh` + its `PreToolUse` registration) exist.
 
 ## The docs/ layout (baked into the template)
 
